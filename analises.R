@@ -35,13 +35,75 @@ mod1 <- lm(height ~ weight, data = d)
 
 mod1
 
+# Fazendo predições e ajustes  --------------------------------------------
+
+# Peso alvo - 43 kg
+
+wght <- 43
+
+# Fazendo gráfico com linhas referentes ao peso que queremos preve --------
+
+d |>
+  ggplot(mapping = aes(x = weight, y = height)) +
+  geom_line(mapping = aes(y = predict(mod1)), size = 1) +
+  geom_point(size = 2, alpha = .2) +
+  geom_segment(
+    x = wght,
+    xend = wght,
+    y = 0,
+    yend = predict(mod1, newdata = data.frame(weight = wght)),
+    linetype = 2,
+    lwd = 0.5
+  ) +
+  geom_segment(
+    x = 0,
+    xend = wght,
+    y = predict(mod1, newdata = data.frame(weight = wght)),
+    yend = predict(mod1, newdata = data.frame(weight = wght)),
+    linetype = 2,
+    lwd = 0.5
+  ) +
+  theme_bw(base_size = 12)
+
+# Aplicando a função predict ----------------------------------------------
+
+d <-  d |>
+  dplyr::mutate(
+    pred_mod1 = predict(mod1),
+    pred_mod1_2 = coef(mod1)[1] + coef(mod1)[2] * weight
+  )
+
+head(d)
+
+# Aplicando a função glm para fazer uma regressão logística ---------------
+
+mod2 <-
+  glm(male ~ height,
+      data = d,
+      family = binomial(link = "logit"))
 
 
+# Aplicado o modelo para predizer o sexo pela estatura usando a predict----
+# e fitted ----------------------------------------------------------------
 
+d <-
+  d |>
+  dplyr::mutate(
+    pred_mod2 = predict(mod2),
+    fitted_mod2 = fitted(mod2)
+  )
 
+# Selecionando e vendo o resultado ----------------------------------------
 
+d |>
+  dplyr::select(height, weight, male, pred_mod2, fitted_mod2) |>
+  head()
 
+# Pegando a função log_dotplot e criando um plot --------------------------
 
+source("logit_dotplot.R")
+
+logit_dotplot(d$height, d$male, xlab = "height", ylab = "p(male)")
 
 
 
