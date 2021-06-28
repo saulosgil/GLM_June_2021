@@ -105,5 +105,48 @@ source("logit_dotplot.R")
 
 logit_dotplot(d$height, d$male, xlab = "height", ylab = "p(male)")
 
+# Calculando os residuos --------------------------------------------------
+
+d <- d |>
+  dplyr::mutate(
+    res1 = residuals(mod1),
+    res2 = height - pred_mod1
+  )
+
+d |>
+  dplyr::select(height, weight, male, pred_mod1, res1, res2) |>
+  head()
+
+# Fazendo um plot dos residuos --------------------------------------------
+
+d |>
+  dplyr::slice_sample(prop = 0.5) |>
+  ggplot(mapping = aes(x = weight,
+                       y = height)) +
+  geom_line(mapping = aes(y = pred_mod1), size = 1) +
+  geom_point(mapping = aes(alpha = abs(res1),
+                           size = abs(res1))) +
+  guides(alpha = "none", size = "none") +
+  geom_segment(mapping = aes(xend = weight,
+                             yend = pred_mod1,
+                             alpha = abs(res1))) +
+  theme_bw(base_size = 12)
+
+# Distribuição dos resíduos -----------------------------------------------
+
+d |>
+  ggplot(mapping = aes(x = res1)) +
+  geom_histogram(mapping = aes(y = ..density..), bins = 20,
+                 alpha = 0.6) +
+  geom_line(aes(y = dnorm(res1, mean = 0, sd = sd(res1))),
+            size = 1) +
+  guides(fill = "none") +
+  theme_bw(base_size = 12) +
+  labs(x = "Residuals", y = "Density")
+
+
+
+
+
 
 

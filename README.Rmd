@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Explorando caracteristicas do modelo linear generalizado
+# Explorando características do modelo linear generalizado
 
 O objetivo deste projeto é treinar a aplicação de modelos de regressão linear e criar gráficos de dispersão que apresentem paramêtros relacionados a qualidade do modelo. Para isso, será replicada algumas análises realizadas pelo Ladislas Nalborczyk em seu texto "Using R to make sense of the generalised linear model"
 
@@ -159,14 +159,61 @@ De maneira generosa, o autor disponibiliza uma função criada por ele (logit_do
 source("logit_dotplot.R")
 logit_dotplot(d$height, d$male, xlab = "height", ylab = "p(male)")
 ```
+
 # Verificando erros e residuos com a função rediduals
 
+O autor deste texto comenta que um erro corriqueiro sobre as suposições do modelo linear (Gaussiano) é que o desfecho deve apresentar distribuição normal. Contudo, essa suposição diz respeito à distribuição do desfecho em torno de seu valor previsto (ou seja, a distribuição dos erros). Mas os erros são as diferenças não observadas (e não observáveis) entre o valor teórico previsto e os resultados observados e, consequentemente, não temos acesso a ele. Em vez disso, podemos trabalhar com os resíduos, que podem ser vistos como uma estimativa (da amostra) dos erros
+De uma forma simplicada, os erros pertencem ao processo de geração de dados, enquanto os **resíduos são a diferença entre a estimativa do modelo e os resultados observados**. No R, podemos obtê-los facilmente usando a função de residuals ou subtraindo a cada resultado observado o previsto.
+```{r}
+# Calculando os residuos --------------------------------------------------
 
+d <- d |>
+  dplyr::mutate(
+    res1 = residuals(mod1),
+    res2 = height - pred_mod1
+  )
 
+d |> 
+  dplyr::select(height, weight, male, pred_mod1, res1, res2) |> 
+  head()
+```
+Abaixo, é apresetado um gráfico com os residuos onde a tranparência e o tamanho dos pontos são dependentes da distância até o valor previsto (de modo que resíduos maiores apareçam como maiores e menos transparentes). Essa distância também é representada pelo comprimento das linhas verticais. 
+```{r, fig.align='center'}
+d |>
+  dplyr::slice_sample(prop = 0.5) |> #selecionando metade da amostra
+  ggplot(mapping = aes(x = weight, 
+                       y = height)) +
+  geom_line(mapping = aes(y = pred_mod1), size = 1) +
+  geom_point(mapping = aes(alpha = abs(res1),
+                           size = abs(res1))) +
+  guides(alpha = "none", size = "none") +
+  geom_segment(mapping = aes(xend = weight,
+                             yend = pred_mod1,
+                             alpha = abs(res1))) +
+  theme_bw(base_size = 12)
+```
+Agora, se pegarmos os resíduos e traçar sua distribuição, podemos verificar a suposição de que a distribuição dos resíduos apresenta distribuição normal. Como podemos observar na figura abaixo, sim, a distribuição dos resíduos apresenta distribuição normal.
+```{r, fig.align='center'}
+# Distribuição dos resíduos -----------------------------------------------
 
+d |> 
+  ggplot(mapping = aes(x = res1)) +
+  geom_histogram(mapping = aes(y = ..density..), bins = 20,
+                 alpha = 0.6) +
+  geom_line(aes(y = dnorm(res1, mean = 0, sd = sd(res1))),
+            size = 1) +
+  guides(fill = "none") +
+  theme_bw(base_size = 12) +
+  labs(x = "Residuals", y = "Density")
+```
 
+# Consideraçõe finais
 
+Após replicar algumas das análises e gráficos ensinados pelo autor n post replicado foi possível praticar alguns conceitos relacionados ao modelo linear generalizado utilizando funções do R para prever e ajustar o modelo de regressão e observar a distribuição dos resíduos que deve ser apresentar distrivuição Gaugassiana.
 
+# Fonte
+
+[Using R to make sense of the generalised linear model](https://www.barelysignificant.com/post/glm/)
 
 
 
